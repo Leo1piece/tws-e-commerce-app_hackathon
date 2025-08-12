@@ -31,6 +31,8 @@ EasyShop follows a three-tier architecture pattern:
 - Client-side Routing
 - Responsive UI Components
 
+
+
 ### 2. Application Tier (Backend)
 - Next.js API Routes
 - Business Logic
