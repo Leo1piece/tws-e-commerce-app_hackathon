@@ -39,3 +39,22 @@ sudo snap install aws-cli --classic
 
 # Helm installation
 sudo snap install helm --classic
+
+# 系统更新和 Java 安装
+
+# 更新 apt 源，安装 Java 17（Jenkins 运行需要）。
+# Jenkins 安装
+
+# 下载 Jenkins 官方密钥，添加 Jenkins 软件源，安装 Jenkins。
+# 启动并设置 Jenkins 开机自启。
+# Docker 安装与配置
+
+# 安装 Docker。
+# 将当前用户和 jenkins 用户加入 docker 用户组，允许这两个用户直接操作 Docker。
+# 重启 Docker 和 Jenkins 服务。
+# Trivy 安装
+
+# 安装 Trivy（容器镜像安全扫描工具）及其依赖。
+# AWS CLI、Helm 安装
+
+# 通过 snap 安装 AWS CLI 和 Helm（Kubernetes 包管理工具）
