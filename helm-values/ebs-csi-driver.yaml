@@ -261,7 +261,7 @@ controller:
   # AWS region to use. If not specified then the region will be looked up via the AWS EC2 metadata
   # service.
   # ---
-  # region: us-east-1
+  # region: ap-southeast-2
   region:
   replicaCount: 2
   revisionHistoryLimit: 10
