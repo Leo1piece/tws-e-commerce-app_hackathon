@@ -1,5 +1,5 @@
 module "iam_assumable_role_with_oidc_ebs" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 2.0"
 
   create_role = true
@@ -10,18 +10,18 @@ module "iam_assumable_role_with_oidc_ebs" {
     Role = "role-ebs-csi-driver"
   }
 
-  provider_url = "oidc.eks.ap-south-1.amazonaws.com/id/48D441B543341965034A0A4E4F5CCAE5"
+  provider_url = "oidc.eks.ap-southeast-2.amazonaws.com/id/48D441B543341965034A0A4E4F5CCAE5"
 
   role_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy",
   ]
 }
 
-module ebs_csi_driver {
-  source  = "../modules/alb_controller"
+module "ebs_csi_driver" {
+  source = "../modules/alb_controller"
 
   namespace  = "kube-system"
-  repository =  "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
+  repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
 
   app = {
     name          = "aws-ebs-csi-driver"
