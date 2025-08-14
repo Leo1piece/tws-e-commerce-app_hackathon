@@ -30,16 +30,21 @@ module "eks" {
   //access entry for any specific user or role (jenkins controller instance)
   #access entry for jenkins controller 也可以 使用config map
   access_entries = {
-    # One access entry with a policy associated
-    example = {
+    terraform_user = {
       principal_arn = "arn:aws:iam::876997124628:user/terraform"
-
       policy_associations = {
         example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
+        }
+      }
+    }
+    fisher_admin = {
+      principal_arn = "arn:aws:iam::876997124628:user/fisher001-adminiam"
+      policy_associations = {
+        example = {
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
         }
       }
     }
