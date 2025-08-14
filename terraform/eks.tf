@@ -25,9 +25,10 @@ module "eks" {
   cluster_name                    = local.name
   cluster_version                 = "1.31"
   cluster_endpoint_public_access  = false
-  cluster_endpoint_private_access = true
+  cluster_endpoint_private_access = true # eks cluster 只能从vpc accessed
 
   //access entry for any specific user or role (jenkins controller instance)
+  #access entry for jenkins controller 也可以 使用config map
   access_entries = {
     # One access entry with a policy associated
     example = {
@@ -44,7 +45,7 @@ module "eks" {
     }
   }
 
-
+  # bastion  个 jenkisn 可以访问 eks cluster
   cluster_security_group_additional_rules = {
     access_for_bastion_jenkins_hosts = {
       cidr_blocks = ["0.0.0.0/0"]
@@ -70,7 +71,7 @@ module "eks" {
   }
 
   vpc_id                   = module.vpc.vpc_id
-  subnet_ids               = module.vpc.private_subnets
+  subnet_ids               = module.vpc.private_subnets # 是 给 node group
   control_plane_subnet_ids = module.vpc.private_subnets
 
   # EKS Managed Node Group(s)
@@ -115,7 +116,7 @@ module "eks" {
 
 
 }
-
+#询当前 EKS 集群下所有处于 "running" 状态的 EC2 实例（节
 data "aws_instances" "eks_nodes" {
   instance_tags = {
     "eks:cluster-name" = module.eks.cluster_name
