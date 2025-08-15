@@ -152,6 +152,8 @@ aws configure
 ```bash
 aws eks --region ap-southeast-2 update-kubeconfig --name tws-eks-cluster
 ```
+
+只有vpc 内部的 bastion 可以access eks control plane
 9. **Check your cluster:**
 ```bash
 kubectl get nodes
@@ -221,7 +223,7 @@ sudo systemctl status jenkins
 >
 > [Notes:] 
 > Make sure the repo contains a proper directory structure eq: vars/<br/>
-	
+	var 里面 的 repo和 docker 需要修改一下
 #### 7. Setup Pipeline<br/>
 > - Create New Pipeline Job<br/>
 >   - **Name:** EasyShop<br/>
@@ -253,7 +255,7 @@ sudo systemctl status jenkins
 > > * Edit `vars/update_k8s_manifest.groovy`<br/>
 > > * Update with your `DockerHub username`<br/>
 > 
-> > **Setup Webhook**<br/>
+> > **Setup Webhook**<br/> 为什么要set up webhook?
 > > In GitHub:<br/>
 > >  * Go to **`Settings` → `Webhooks`**<br/>
 > >  * Add a new webhook pointing to your Jenkins URL<br/>
