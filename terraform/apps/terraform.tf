@@ -17,11 +17,18 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
+<<<<<<< HEAD
   region = "ap-southeast-2"
 }
 
 #跨区域资源管理
 #如果你需要在不同的 AWS 区域（比如一个资源在 eu-west-1，另一个在 ap-southeast-2）创建资源，就需要定义多个 provider，并用 alias 区分。例如：
+=======
+  region = "ap-south-1"
+}
+
+
+>>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
 provider "helm" {
   kubernetes = {
     config_path = "~/.kube/config"

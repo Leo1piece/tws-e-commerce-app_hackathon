@@ -15,7 +15,11 @@ spec:
     spec:
       containers:
         - name: easyshop
+<<<<<<< HEAD
           image: leotodevops/easyshop-app
+=======
+          image: laxg66/easyshop-app
+>>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
