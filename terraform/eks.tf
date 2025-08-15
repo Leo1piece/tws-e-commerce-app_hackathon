@@ -31,11 +31,9 @@ module "eks" {
   #access entry for jenkins controller 也可以 使用config map
   access_entries = {
     terraform_user = {
-<<<<<<< HEAD
+
       principal_arn = "arn:aws:iam::277707141977:user/terraform"
-=======
-      principal_arn = "arn:aws:iam::876997124628:user/terraform"
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
       policy_associations = {
         example = {
           policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
@@ -44,11 +42,9 @@ module "eks" {
       }
     }
     fisher_admin = {
-<<<<<<< HEAD
+
       principal_arn = "arn:aws:iam::277707141977:user/fisher001-adminiam"
-=======
-      principal_arn = "arn:aws:iam::876997124628:user/fisher001-adminiam"
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
       policy_associations = {
         example = {
           policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"

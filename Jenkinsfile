@@ -5,13 +5,10 @@ pipeline {
     
     environment {
         // Update the main app image name to match the deployment file
-<<<<<<< HEAD
+
         DOCKER_IMAGE_NAME = 'leotodevops/easyshop-app'
         DOCKER_MIGRATION_IMAGE_NAME = 'leotodevops/easyshop-migration'
-=======
-        DOCKER_IMAGE_NAME = 'laxg66/easyshop-app'
-        DOCKER_MIGRATION_IMAGE_NAME = 'laxg66/easyshop-migration'
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
         DOCKER_IMAGE_TAG = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = credentials('github-credentials')
         GIT_BRANCH = "master"
@@ -29,11 +26,9 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 script {
-<<<<<<< HEAD
+
                     clone("https://github.com/Leo1piece/tws-e-commerce-app_hackathon.git","master")
-=======
-                    clone("https://github.com/lax66/tws-e-commerce-app_hackathon.git","master")
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
                 }
             }
         }

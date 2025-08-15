@@ -607,11 +607,8 @@ alertmanager:
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip
-<<<<<<< HEAD
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
-=======
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:876997124628:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
       alb.ingress.kubernetes.io/ssl-redirect: '443'
 
@@ -1285,11 +1282,8 @@ grafana:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/healthcheck-path: /api/health
-<<<<<<< HEAD
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
-=======
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:876997124628:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
       alb.ingress.kubernetes.io/ssl-redirect: '443'
 
@@ -3684,11 +3678,8 @@ prometheus:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/healthcheck-path: /-/healthy
-<<<<<<< HEAD
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
-=======
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:876997124628:certificate/b69bb6e7-cbd1-490b-b765-27574080f48c
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
       alb.ingress.kubernetes.io/ssl-redirect: '443'
     labels: {}

@@ -287,11 +287,8 @@ controller:
     name: ebs-csi-controller-sa
     annotations:
     ## Enable if EKS IAM for SA is used
-<<<<<<< HEAD
      eks.amazonaws.com/role-arn: arn:aws:iam::277707141977:role/AmazonEKS_EBS_CSI_DriverRole
-=======
-     eks.amazonaws.com/role-arn: arn:aws:iam::876997124628:role/AmazonEKS_EBS_CSI_DriverRole
->>>>>>> 583401a6d8617af7499e4bd4135fa2dba0d8064d
+
     automountServiceAccountToken: true
   tolerations:
     - key: CriticalAddonsOnly
