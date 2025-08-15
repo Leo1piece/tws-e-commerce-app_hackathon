@@ -94,7 +94,7 @@ Install these plugins via "Manage Jenkins" > "Manage Plugins" > "Available":
 
 ### 1. Generate GitHub Token
 
-1. Go to GitHub.com > Settings > Developer settings > Personal access tokens
+1. Go to GitHub.com > profile  Settings > Developer settings > Personal access tokens
 2. Generate new token (classic)
 3. Select scopes:
    - repo (all)
