@@ -10,3 +10,5 @@ spec:
   hostPath:
     path: /data/mongodb
   persistentVolumeReclaimPolicy: Retain
+
+

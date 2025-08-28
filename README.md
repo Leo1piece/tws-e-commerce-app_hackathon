@@ -100,6 +100,80 @@ sudo ./aws/install
 
 > Follow the steps below to get your infrastructure up and running using Terraform:<br/>
 
+0 ssl /tls
+
+# Deploying a Secure Nginx Website on AWS
+
+This guide explains how to deploy an **Nginx web server** on an **EC2 instance** behind a **Load Balancer**, configure **Route 53 DNS**, and secure the website with an **SSL/TLS certificate** from AWS Certificate Manager (ACM).
+
+---
+
+## Steps
+
+### 0.1 Launch EC2 Instance
+![alt text](image-26.png)
+
+### 0.2 Set Up Load Balancer
+- Create a **Load Balancer** (Application Load Balancer recommended).
+- Create a **Listener** and add the EC2 instance into the **Target Group**.
+
+
+load balancer 的 sg 配置 ，要不然，访问无法成功
+ALB 安全组 (SG)
+
+入站要允许：
+
+TCP 80（HTTP）来源 0.0.0.0/0
+
+TCP 443（HTTPS，如使用）来源 0.0.0.0/0
+
+出站一般保持 All traffic 允许即可（默认是允许）。
+### 0.3 Configure DNS in Route 53
+- Create a **Public Hosted Zone** in **Route 53**.
+
+hotst name. hostingger.
+
+
+### 0.4 Update Domain Registrar
+- Go to your **domain registrar** (e.g., Hostinger, GoDaddy).
+- Copy the **nameservers** from Route 53 and update them in the registrar.
+主要是得修改 nameserver
+how the dns work 
+top level domain, will tranct to autoriaztive server,  杠开始，我的 name server 是ogdaday,但是现在 autoraize server 是 route 53.现在告诉go daddy, when the request is coming, you dont need to hold it and rout the traffic to route 53.
+然后你的brower就知道 server 的ip.
+再 自己的 ec2上 运行  host devops.site 能看到 ip 所以序号change  nameserver
+可以去 dsn checker 来查看 也可以使用nslookup 来查看
+
+TLS TERmeation means the traffic will be encyped.
+![alt text](image-22.png)
+
+### 0.5 Wait for Propagation
+- DNS propagation may take **12–48 hours**.
+
+### 0.6 Request SSL/TLS Certificate
+- Once DNS propagation is complete:
+  - Go to **AWS Certificate Manager (ACM)**.
+  - Request a **public certificate** for your domain.
+  - Add the required CNAME record in **Route 53**.
+
+![alt text](image-27.png)
+然后 点击createcords in route 53
+![alt text](image-25.png)
+### 0.7 Validate Certificate
+- Wait for validation (usually **5–6 minutes**).
+- The certificate will then be issued.
+
+### 0.8 Configure HTTPS in Load Balancer
+- Go to the **Load Balancer**.
+- Create a new **HTTPS listener** or edit the existing listener to use the SSL certificate.
+
+### 0.9 Update DNS Records
+- In Route 53, create or edit an **A record / CNAME record** pointing your domain to the Load Balancer.
+
+### 0.10 Access Your Website
+- Open a browser and access your domain with:
+
+
 1. **Clone the Repository:**
 First, clone this repo to your local machine:<br/>
 ```bash
@@ -255,7 +329,7 @@ sudo systemctl status jenkins
 > > * Edit `vars/update_k8s_manifest.groovy`<br/>
 > > * Update with your `DockerHub username`<br/>
 > 
-> > **Setup Webhook**<br/> 为什么要set up webhook?
+> > **Setup Webhook**<br/> 为什么要set up webhook? 需要研究一下
 > > In GitHub:<br/>
 > >  * Go to **`Settings` → `Webhooks`**<br/>
 > >  * Add a new webhook pointing to your Jenkins URL<br/>
@@ -294,11 +368,14 @@ aws eks update-kubeconfig --region ap-southeast-2 --name tws-eks-cluster
 
 **10. Install AWS application load balancer refering the below docs link**<br/>
 ```
-https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+https://docs.aws.amazon.com/eks/ latest/userguide/lbc-helm.html
 
 
 ```
-he controller watches for Kubernetes Ingress or Service resources. In response, it creates the appropriate AWS Elastic Load Balancing resources
+
+prerequsits,前提是需要安装很多 cnis 之类的
+可以使用看 k get pods -n system
+the controller watches for Kubernetes Ingress or Service resources. In response, it creates the appropriate AWS Elastic Load Balancing resources
 
 he controller provisions the following resources:
 
@@ -311,27 +388,34 @@ he controller provisions the following resources:
 
 
 eksctl create iamserviceaccount \
-    --cluster=<cluster-name> \
+    --cluster=tws-eks-cluster \
     --namespace=kube-system \
     --name=aws-load-balancer-controller \
-    --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+    --attach-policy-arn=arn:aws:iam::277707141977:policy/AWSLoadBalancerControllerIAMPolicy \
     --override-existing-serviceaccounts \
-    --region <aws-region-code> \
+    --region ap-southeast-2 \
     --approve
-通过helm 来安装alb
+
+    ![alt text](image-18.png)
+    implemeting the cloudformation to create the sa.role. ,去 conslole validate， 验证一下。 cloudformation。
+    k get sa  aws-load-balncer-controler -n kube-system
+    然后step 2 
+通过helm 来安装alb controller
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
-  --set clusterName=my-cluster \
+  --set clusterName=tws-eks-cluster \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=ap-southeast-2
+  --set vpcId=vpc-0f29bb76897c77a96
   --version 1.13.0
-    --set region=region-code
-
---set vpcId=vpc-xxxxxxxx
+应该能看到 alb controller 
+k get deploymetn -n kube-system aws-load-balancer.
 
 注意的是 The helm install command automatically installs the custom resource definitions (CRDs) for the controller. The helm upgrade command does no
 kubectl get deployment -n kube-system aws-load-balancer-controller 命令
 **11. Install the EBS CSI driver refering the below docs link**<br/>
+same process as alb controler,  比较简单的是使用 eksctl 来安装。  然后去看cloudformation.
 ```
 https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html#eksctl_store_app_data
 ```
@@ -343,30 +427,31 @@ The Amazon EBS CSI plugin requires IAM permissions to make calls to AWS APIs on 
 
 1  新建一个 iam role
 
-和  alb 类似。
+和  alb 类似。  然后去 helm  install csi driver
 eksctl create iamserviceaccount \
         --name ebs-csi-controller-sa \
         --namespace kube-system \
-        --cluster my-cluster \
+        --cluster tws-eks-cluster \
         --role-name AmazonEKS_EBS_CSI_DriverRole \
         --role-only \
         --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
         --approve
 
-
-aws iam create-policy \
+不适用下面的如果没有kms
+<!-- aws iam create-policy \
       --policy-name KMS_Key_For_Encryption_On_EBS_Policy \
       --policy-document file://kms-key-for-encryption-on-ebs.json
 
 Attach the IAM policy to the role with the following command.
 aws iam attach-role-policy \
       --policy-arn arn:aws:iam::111122223333:policy/KMS_Key_For_Encryption_On_EBS_Policy \
-      --role-name AmazonEKS_EBS_CSI_DriverRole
+      --role-name AmazonEKS_EBS_CSI_DriverRole -->
 
 step 2  use helm to depoy the driver . 也可以使用kustomize 
 helm upgrade --install aws-ebs-csi-driver \
     --namespace kube-system \
     aws-ebs-csi-driver/aws-ebs-csi-driver
+需要 k  get pods -n kube-system -l app.kubernetes.io/name=aws-cis-driver  w 来看信息
 
 **12. Argo CD Setup**<br/>
 Create a Namespace for Argo CD<br/>
@@ -375,11 +460,15 @@ kubectl create namespace argocd
 ```
 1. Install Argo CD using helm  
 (https://artifacthub.io/packages/helm/argo/argo-cd)
+
+
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install my-argo-cd argo/argo-cd --version 8.2.7
-```
-2. get the values file and save it
+helm install my-argo-cd argo/argo-cd --version 8.2.7 -n argocd11
+``
+1， 为了access argocd，一个是去helm repo check the default values. 
+一个是使用 ingress 或者 loadballncer 所以才需要配置 values
+2. get the values file and save it ******
 为什么是这个命令 helm show values argo/argo-cd 会显示 argo/argo-cd 这个 Helm Chart 的所有可配置参数
 ```bash
 helm show values argo/argo-cd > argocd-values.yaml  
@@ -387,13 +476,13 @@ helm show values argo/argo-cd > argocd-values.yaml
 3. edit the values file, change the below settings.
 ```
 global:
-  domain: argocd.example.com
+  domain: argocd.example.com  搜索  ingress  前提是检测 argocd running or not。 k get po -n argocd  然后vi  set number 
 
 configs:
   params:
     server.insecure: true
 这里开启argo cd的 ingress 从 argo cd 官网的 aws loadbalancer中拷贝。 
-https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#aws-application-load-balancers-albs-and-classic-elb-http-mode
+https://argo-cd.readthedocs.io/en/stable/operat-or-manual/ingress/#aws-application-load-balancers-albs-and-classic-elb-http-mode
 server:
   ingress:
     enabled: true # 这里开启argo cd的 ingress 从 argo cd 官网的 aws loadbalancer中拷贝。
@@ -403,14 +492,22 @@ server:
       alb.ingress.kubernetes.io/scheme: internet-facing 
       alb.ingress.kubernetes.io/certificate-arn: <your-cert-arn>  #ssl/tls certificat
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb  # combine all the ingress resoure 到一个 group中，不需要创建多个 alb
-      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/target-type: ip 或者 instance #不适用nodeport，需要修改wei clster ip 也就是ip   会把tfraffic  forward 到一个 target group. 也就是 POD  ip 也就是 targetgroup里面的pod 的IP.  traget-type 是 ip address。 不是instance ip.
       alb.ingress.kubernetes.io/backend-protocol: HTTP
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
       alb.ingress.kubernetes.io/ssl-redirect: '443'  if the traffic from http, it will be redirect to https 
     hostname: argocd.devopsdock.site   # hostname 就是一个subdomomin
     aws:
-      serviceType: ClusterIP # <- Used with target-type: ip  #不适用nodeport，需要修改wei clster ip 也就是ip 
+      serviceType: ClusterIP # <- Used with target-type: ip  
       backendProtocolVersion: GRPC
+搜索  alb ingress annataions 能看到下面的 关于 group
+Security Risk
+
+IngressGroup feature should only be used when all Kubernetes users with RBAC permission to create/modify Ingress resources are within trust boundary.
+
+If you turn your Ingress to belong a "explicit IngressGroup" by adding group.name annotation, other Kubernetes user may create/modify their Ingresses to belong same IngressGroup, thus can add more rules or overwrite existing rules with higher priority to the ALB for your Ingress.
+
+We'll add more fine-grained access-control in future versions. 
 
     使用vim  技巧   set number 和 /来搜索。 alias k=kubectl 
     
@@ -421,15 +518,19 @@ helm upgrade my-argo-cd argo/argo-cd -n argocd -f my-values.yaml
 
 k get ingress argocd
 这时候会创建一个 loadbalancer.
-listern rules， 会把tfraffic  forward 到一个 target group. 也就是 port iip.  traget-type 是 ip address。 不是instance
+listern rules， 会把tfraffic  forward 到一个 target group. 也就是 port iip.  traget-type 是 ip address。 不是instance ip.
 k get po -n argocd -o wide，
 我们能看到 这里面的 argocd server pod ip 就是前面的 target ips.
+ 一个是grpc 一个是 http 看这里的listener rule。 这个rule 就是
+ ![alt text](image-19.png)
 
 
+这里面的 target group 就是  pod  argocd server 的ip
+![alt text](image-20.png)
 ```
 5. add the record in route53 “argocd.devopsdock.site” with load balancer dns.
 
-record type 使用a reocrd， 然后选择 loadbalancer
+record type 使用a reocrd， 然后  alias 。。 选择 loadbalancer":  a rcord alias
 
 
 A 记录（Address Record）

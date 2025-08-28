@@ -3,7 +3,7 @@ terraform {
     bucket       = "terraform-s3-backend-tws-hackathon-ying"
     key          = "backend-locking"
     region       = "ap-southeast-2"
-    use_lockfile = true
+    # use_lockfile = true
   }
 }
 #Locking can be enabled via S3 or DynamoDB. However, DynamoDB-based locking is deprecated and will be removed in a future minor version.

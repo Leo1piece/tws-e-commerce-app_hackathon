@@ -11,3 +11,4 @@ spec:
       nodePort: 30000
   selector:
     app: easyshop
+
