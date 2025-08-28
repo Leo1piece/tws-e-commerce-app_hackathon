@@ -1,5 +1,5 @@
 data "aws_ami" "os_image" {
-  owners      = ["099720109477"]
+  owners      = ["099720109477"]  # Ubuntu 官方账户 ID 
   most_recent = true
   filter {
     name   = "state"
@@ -20,7 +20,13 @@ resource "aws_security_group" "allow_user_to_connect" {
   name        = "allow TLS"
   description = "Allow user to connect"
   vpc_id      = module.vpc.vpc_id
-  dynamic "ingress" {
+
+  #dynamic  dynamic 语法是专门用来 生成子块 (nested block) 的。 aws_security_group.ingress → nested block → 要用 dynamic
+
+# aws_iam_role_policy_attachment → 独立资源 → 直接 for_each
+  #  dynamic "ingress" 简化了配置（循环生成多个 ingress 规则）。 dynamic "ebs_block_device" {
+  # 或者     role_policy attachment 中可以使用  for_each   = toset(var.policy_arns)    policy_arn = each.value
+  dynamic "ingress" {  
     for_each = [
       { description = "port 22 allow", from = 22, to = 22, protocol = "tcp", cidr = ["0.0.0.0/0"] },
       { description = "port 80 allow", from = 80, to = 80, protocol = "tcp", cidr = ["0.0.0.0/0"] },
@@ -28,7 +34,7 @@ resource "aws_security_group" "allow_user_to_connect" {
       { description = "port 8080 allow", from = 8080, to = 8080, protocol = "tcp", cidr = ["0.0.0.0/0"] }
     ]
     content {
-      description = ingress.value.description
+      description = ingress.value.descriptionv
       from_port   = ingress.value.from
       to_port     = ingress.value.to
       protocol    = ingress.value.protocol
@@ -52,7 +58,7 @@ resource "aws_security_group" "allow_user_to_connect" {
 
 resource "aws_instance" "testinstance" {
   ami                    = data.aws_ami.os_image.id
-  instance_type          = var.instance_type
+  instance_type          = "t3.medium"
   key_name               = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.allow_user_to_connect.id]
   subnet_id              = module.vpc.public_subnets[0]
