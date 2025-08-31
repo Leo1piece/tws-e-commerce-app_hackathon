@@ -368,7 +368,7 @@ aws eks update-kubeconfig --region ap-southeast-2 --name tws-eks-cluster
 
 **10. Install AWS application load balancer refering the below docs link**<br/>
 ```
-https://docs.aws.amazon.com/eks/ latest/userguide/lbc-helm.html
+https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
 
 
 ```
@@ -410,6 +410,7 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --set vpcId=vpc-0f29bb76897c77a96
   --version 1.13.0
 应该能看到 alb controller 
+k  get sa -n kube-system 
 k get deploymetn -n kube-system aws-load-balancer.
 
 注意的是 The helm install command automatically installs the custom resource definitions (CRDs) for the controller. The helm upgrade command does no
@@ -453,6 +454,8 @@ helm upgrade --install aws-ebs-csi-driver \
     aws-ebs-csi-driver/aws-ebs-csi-driver
 需要 k  get pods -n kube-system -l app.kubernetes.io/name=aws-cis-driver  w 来看信息
 
+
+
 **12. Argo CD Setup**<br/>
 Create a Namespace for Argo CD<br/>
 ```bash
@@ -473,7 +476,10 @@ helm install my-argo-cd argo/argo-cd --version 8.2.7 -n argocd11
 ```bash
 helm show values argo/argo-cd > argocd-values.yaml  
 ```
-3. edit the values file, change the below settings.
+3. edit the values file, change the below settings.   为了foring exposing the argocd in ingress.
+
+在 artifcat hub 页面中可以查看 如何配置 alb ingress
+![alt text](image-28.png)
 ```
 global:
   domain: argocd.example.com  搜索  ingress  前提是检测 argocd running or not。 k get po -n argocd  然后vi  set number 
