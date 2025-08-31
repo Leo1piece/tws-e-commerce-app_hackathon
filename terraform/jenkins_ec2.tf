@@ -1,5 +1,6 @@
 data "aws_ami" "os_image" {
-  owners      = ["099720109477"]  # Ubuntu 官方账户 ID 
+  owners      = ["099720109477"]  # Ubuntu 官方账户 ID #  (Required) List of AMI owners to limit search.
+
   most_recent = true
   filter {
     name   = "state"
@@ -10,10 +11,17 @@ data "aws_ami" "os_image" {
     values = ["ubuntu/images/hvm-ssd-gp3/*24.04-amd64*"]
   }
 }
+
+
 # 需要生成一个密钥对 priveate key in your local machine and public key upload terraform 
 resource "aws_key_pair" "deployer" {
   key_name   = "terra-automate-key"
   public_key = file("terra-key.pub")
+}
+
+resource "aws_key_pair" "deploy"{
+  key_name = ""
+  public_key = file ("")
 }
 
 resource "aws_security_group" "allow_user_to_connect" {
@@ -34,7 +42,7 @@ resource "aws_security_group" "allow_user_to_connect" {
       { description = "port 8080 allow", from = 8080, to = 8080, protocol = "tcp", cidr = ["0.0.0.0/0"] }
     ]
     content {
-      description = ingress.value.descriptionv
+      description = ingress.value.description
       from_port   = ingress.value.from
       to_port     = ingress.value.to
       protocol    = ingress.value.protocol
@@ -73,7 +81,8 @@ resource "aws_instance" "testinstance" {
 
 }
 
-resource "aws_eip" "jenkins_server_ip" {
-  instance = aws_instance.testinstance.id
-  domain   = "vpc"
-}
+# 可以不用使用eip了。
+# resource "aws_eip" "jenkins_server_ip" {
+#   instance = aws_instance.testinstance.id
+#   domain   = "vpc"
+# }
