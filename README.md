@@ -264,6 +264,11 @@ sudo systemctl status jenkins
 > - Search and install the following:<br/>
 >   - **Docker Pipeline**<br/>
 >   - **Pipeline View**
+Install these plugins via "Manage Jenkins" > "Manage Plugins" > "Available":
+- Docker Pipeline
+- Email Extension Plugin
+- GitHub Integration Plugin
+- Pipeline Utility Steps
 
 
 #### 5. **Set Up Docker & GitHub Credentials in Jenkins (Global Credentials)**<br/>
@@ -293,7 +298,8 @@ sudo systemctl status jenkins
 > - **Add a New Shared Library:** 
 > - **Name:** Shared
 > - **Default Version:** main
-> - **Project Repository URL:** `https://github.com/<your user-name/jenkins-shared-libraries`.
+> - **Project Repository URL:** `https://github.com/<your user-name/jenkins-shared-libraries`.   这个地址要注意没有.git
+![alt text](image-29.png)
 >
 > [Notes:] 
 > Make sure the repo contains a proper directory structure eq: vars/<br/>
@@ -306,10 +312,10 @@ sudo systemctl status jenkins
 
 > > In **General**<br/>
 > > - **Description:** EasyShop<br/>
-> > - **Check the box:** `GitHub project`<br/>
+> > - **Check the box:** `GitHub project`<br/> 不需要这个
 > > - **GitHub Repo URL:** `https://github.com/<your user-name/tws-e-commerce-app`<br/>
 >
-> > In **Trigger**<br/>
+> > In **Trigger**<br/> 也不需要这个
 > > - **Check the box:**`GitHub hook trigger for GITScm polling`<br/>
 >
 > > In **Pipeline**<br/>
@@ -377,7 +383,7 @@ prerequsits,前提是需要安装很多 cnis 之类的
 可以使用看 k get pods -n system
 the controller watches for Kubernetes Ingress or Service resources. In response, it creates the appropriate AWS Elastic Load Balancing resources
 
-he controller provisions the following resources:
+the controller provisions the following resources:
 
   Kubernetes Ingress
   The LBC creates an AWS Application Load Balancer (ALB) when you create a Kubernetes Ingress. Review the annotations you can apply to an Ingress resource.
@@ -385,6 +391,15 @@ he controller provisions the following resources:
   Kubernetes service of the LoadBalancer type
   The LBC creates an AWS Network Load Balancer (NLB)when you create a Kubernetes service of type LoadBalancer. Review the annotations you can apply to a Service resource.
 如果使用的是服务账户的 IAM 角色（IRSA），则必须为每个集群设置 IRSA，并且角色信任策略中的 OpenID Connect（OIDC）提供者 ARN 应特定于每个 EKS 集群
+
+按照 link的要求需要创建iam 
+
+先删除原来的
+eksctl delete iamserviceaccount \
+  --cluster tws-eks-cluster \
+  --name aws-load-balancer-controller \
+  --namespace kube-system \
+  --region ap-southeast-2
 
 
 eksctl create iamserviceaccount \
@@ -398,27 +413,37 @@ eksctl create iamserviceaccount \
 
     ![alt text](image-18.png)
     implemeting the cloudformation to create the sa.role. ,去 conslole validate， 验证一下。 cloudformation。
-    k get sa  aws-load-balncer-controler -n kube-system
+-------  k get sa aws-load-balancer-controller -n kube-system
     然后step 2 
 通过helm 来安装alb controller
+最好是是先卸载干净。
+helm uninstall aws-load-balancer-controller -n kube-system
+# 等 5~20 秒资源清理
+
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
   --set clusterName=tws-eks-cluster \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller \
-  --set region=ap-southeast-2
-  --set vpcId=vpc-0f29bb76897c77a96
+  --set region=ap-southeast-2 \
+  --set vpcId=vpc-08d0991e6b1a7096c \
   --version 1.13.0
+  反斜杠如果没有的话会报错。
 应该能看到 alb controller 
 k  get sa -n kube-system 
-k get deploymetn -n kube-system aws-load-balancer.
+验证
+kubectl get deployment -n kube-system aws-load-balancer-controller
+![alt text](image-30.png)
+
+可以去查看aws-load-balnacer  conteroller 官方文档。
 
 注意的是 The helm install command automatically installs the custom resource definitions (CRDs) for the controller. The helm upgrade command does no
 kubectl get deployment -n kube-system aws-load-balancer-controller 命令
 **11. Install the EBS CSI driver refering the below docs link**<br/>
 same process as alb controler,  比较简单的是使用 eksctl 来安装。  然后去看cloudformation.
 ```
-https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html#eksctl_store_app_data
+https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+
 ```
 Amazon EBS volumes and the Amazon EBS CSI driver are not compatible with Amazon EKS Hybrid Nodes.
 
@@ -438,6 +463,9 @@ eksctl create iamserviceaccount \
         --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
         --approve
 
+不知道为什么不行，所以使用aws console 也就是文档中的方法  新建一个role ,trust oidc ,action sts assuemorwithwebidentity AmazonEKS_EBS_CSI_DriverRole 和 ebscisdriver policy
+![alt text](image-31.png)
+
 不适用下面的如果没有kms
 <!-- aws iam create-policy \
       --policy-name KMS_Key_For_Encryption_On_EBS_Policy \
@@ -449,11 +477,20 @@ aws iam attach-role-policy \
       --role-name AmazonEKS_EBS_CSI_DriverRole -->
 
 step 2  use helm to depoy the driver . 也可以使用kustomize 
+
+helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+helm repo update
+
+----Install the latest release of the driver.
 helm upgrade --install aws-ebs-csi-driver \
     --namespace kube-system \
     aws-ebs-csi-driver/aws-ebs-csi-driver
-需要 k  get pods -n kube-system -l app.kubernetes.io/name=aws-cis-driver  w 来看信息
 
+Once the driver has been deployed, verify the pods are running:
+
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
+
+![alt text](image-32.png)
 
 
 **12. Argo CD Setup**<br/>
@@ -467,7 +504,7 @@ kubectl create namespace argocd
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install my-argo-cd argo/argo-cd --version 8.2.7 -n argocd11
+helm install my-argo-cd argo/argo-cd --version 8.3.3  -n argocd
 ``
 1， 为了access argocd，一个是去helm repo check the default values. 
 一个是使用 ingress 或者 loadballncer 所以才需要配置 values
@@ -477,6 +514,17 @@ helm install my-argo-cd argo/argo-cd --version 8.2.7 -n argocd11
 helm show values argo/argo-cd > argocd-values.yaml  
 ```
 3. edit the values file, change the below settings.   为了foring exposing the argocd in ingress.
+vim 的使用技巧，以及 n -- 跳到下一个匹配。---set number显示行数
+入 /关键词 然后回车，就会从光标所在位置向下搜索。
+就会跳到第一个出现 ingress 的地方。
+
+输入 ?关键词 然后回车，就会从光标所在位置向上搜索。
+
+搜索到一个结果后： 回车
+
+按 n → 跳到下一个匹配。
+
+按 N → 跳到上一个匹配。
 
 在 artifcat hub 页面中可以查看 如何配置 alb ingress
 ![alt text](image-28.png)
@@ -494,18 +542,22 @@ server:
     enabled: true # 这里开启argo cd的 ingress 从 argo cd 官网的 aws loadbalancer中拷贝。
     controller: aws  # 都是默认值。
     ingressClassName: alb  # ingressClassName
+
+
     annotations:
       alb.ingress.kubernetes.io/scheme: internet-facing 
-      alb.ingress.kubernetes.io/certificate-arn: <your-cert-arn>  #ssl/tls certificat
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/8019c5e4-24a2-487c-888d-941f7fd27632 #ssl/tls certificat
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb  # combine all the ingress resoure 到一个 group中，不需要创建多个 alb
-      alb.ingress.kubernetes.io/target-type: ip 或者 instance #不适用nodeport，需要修改wei clster ip 也就是ip   会把tfraffic  forward 到一个 target group. 也就是 POD  ip 也就是 targetgroup里面的pod 的IP.  traget-type 是 ip address。 不是instance ip.
+      alb.ingress.kubernetes.io/target-type: ip #或者 instance #不适用nodeport，需要修改为 clster ip 也就是ip   会把tfraffic  forward 到一个 target group. 也就是 POD  ip 也就是 targetgroup里面的pod 的IP.  traget-type 是 ip address。 不是instance ip.
       alb.ingress.kubernetes.io/backend-protocol: HTTP
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/ssl-redirect: '443'  if the traffic from http, it will be redirect to https 
-    hostname: argocd.devopsdock.site   # hostname 就是一个subdomomin
+      alb.ingress.kubernetes.io/ssl-redirect: '443'   #if the traffic from http, it will be redirect to https 
+    
+    
+    hostname: argocd.marvelneo.online   # hostname 就是一个subdomomin
     aws:
       serviceType: ClusterIP # <- Used with target-type: ip  
-      backendProtocolVersion: GRPC
+      backendProtocolVersion: GRPC  #这是什么？？ 把nod
 搜索  alb ingress annataions 能看到下面的 关于 group
 Security Risk
 
@@ -537,13 +589,14 @@ k get po -n argocd -o wide，
 5. add the record in route53 “argocd.devopsdock.site” with load balancer dns.
 
 record type 使用a reocrd， 然后  alias 。。 选择 loadbalancer":  a rcord alias
-
+![alt text](image-33.png)
 
 A 记录（Address Record）
 
 作用：将域名直接解析到一个 IPv4 地址。
 场景：将 example.com 解析到 EC2、ELB、ALB 的公网 IP。
 示例：easyshop.devopsdock.site → 1.2.3.4
+
 CNAME 记录（Canonical Name Record）
 
 作用：将一个域名指向另一个域名（不能用于根域名）。
@@ -556,6 +609,9 @@ Alias 记录（AWS 特有）
 示例：easyshop.devopsdock.site → my-alb-1234567890.us-west-2.elb.amazonaws.com
 
 6. access it in browser.
+安装argocd之后的类似jenins
+admin
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 7. Retrive the secret for Argocd
 

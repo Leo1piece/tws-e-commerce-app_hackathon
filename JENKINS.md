@@ -106,7 +106,7 @@ Install these plugins via "Manage Jenkins" > "Manage Plugins" > "Available":
 1. Add GitHub token to Jenkins credentials:
    - Kind: Secret text
    - Scope: Global
-   - ID: github-token
+   - ID: github-token  应该就是这个 github-credentials
    - Description: GitHub Token
 
 ### 3. Setup Webhook

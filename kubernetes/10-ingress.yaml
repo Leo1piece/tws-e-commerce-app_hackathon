@@ -7,7 +7,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: easyshop-app-lb
     alb.ingress.kubernetes.io/scheme: internet-facing
 
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/3fcfd586-3638-4997-9073-95d43d155430
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:277707141977:certificate/8019c5e4-24a2-487c-888d-941f7fd27632
 
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/backend-protocol: HTTP
