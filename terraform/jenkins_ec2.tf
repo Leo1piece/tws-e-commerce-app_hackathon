@@ -19,10 +19,6 @@ resource "aws_key_pair" "deployer" {
   public_key = file("terra-key.pub")
 }
 
-resource "aws_key_pair" "deploy"{
-  key_name = ""
-  public_key = file ("")
-}
 
 resource "aws_security_group" "allow_user_to_connect" {
   name        = "allow TLS"
