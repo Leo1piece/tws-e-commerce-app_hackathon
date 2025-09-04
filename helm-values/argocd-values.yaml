@@ -2378,7 +2378,7 @@ server:
 
     # -- Argo CD server hostname
     # @default -- `""` (defaults to global.domain)
-    hostname: argocd.devopsdock.site
+    hostname: argocd.marvelneo.online 
 
     # -- The path to Argo CD server
     path: /

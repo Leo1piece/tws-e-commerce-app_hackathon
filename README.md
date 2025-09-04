@@ -586,7 +586,7 @@ k get po -n argocd -o wide，
 这里面的 target group 就是  pod  argocd server 的ip
 ![alt text](image-20.png)
 ```
-5. add the record in route53 “argocd.devopsdock.site” with load balancer dns.
+5. add the record in route53 “argocd.marvelneo.online ” with load balancer dns.
 
 record type 使用a reocrd， 然后  alias 。。 选择 loadbalancer":  a rcord alias
 ![alt text](image-33.png)
@@ -595,18 +595,18 @@ A 记录（Address Record）
 
 作用：将域名直接解析到一个 IPv4 地址。
 场景：将 example.com 解析到 EC2、ELB、ALB 的公网 IP。
-示例：easyshop.devopsdock.site → 1.2.3.4
+示例：easyshop.marvelneo.online  → 1.2.3.4
 
 CNAME 记录（Canonical Name Record）
 
 作用：将一个域名指向另一个域名（不能用于根域名）。
 场景：www.example.com → example.com，或指向 CloudFront/ELB DNS 名称。
-示例：www.easyshop.devopsdock.site → easyshop.devopsdock.site
+示例：www.easyshop.marvelneo.online  → easyshop.marvelneo.online 
 Alias 记录（AWS 特有）
 
 作用：将域名直接指向 AWS 资源（如 ALB、CloudFront、S3 静态网站），不消耗 DNS 查询次数。
 场景：根域名指向 ALB/CloudFront。
-示例：easyshop.devopsdock.site → my-alb-1234567890.us-west-2.elb.amazonaws.com
+示例：easyshop.marvelneo.online  → my-alb-1234567890.us-west-2.elb.amazonaws.com
 
 6. access it in browser.
 安装argocd之后的类似jenins
@@ -678,7 +678,7 @@ annotations:
     kubernetes.io/ingress.class: alb
 ```
 
-- **add record to route 53 “easyshop.devopsdock.site”** 这次可以使用cname.
+- **add record to route 53 “easyshop.marvelneo.online ”** 这次可以使用cname.
 
 - **Access your site now.**
 
@@ -689,10 +689,56 @@ annotations:
 ```
 https://artifacthub.io/packages/helm/metrics-server/metrics-server
 ```
+
+install
+ helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm install my-metrics-server metrics-server/metrics-server --version 3.13.0
 verify metric server.
 ```
 kubectl get pods -w
 kubectl top pods 能看到 metrics cupu of the node.
+
+我在这里看不到
+节点组要有 Autoscaling 配置
+你的节点组 tws-demo-ng-20250903013515325700000013 是 managed nodegroup，设置了 min=1 / max=3。这说明节点层面允许自动扩容。
+
+需要部署 Cluster Autoscaler (CA)
+仅仅设置了 min/max 并不会让 EKS 自动扩缩。
+
+EKS 本身不会“看 Pod Pending 就加节点”；它只会在你手动改 Desired 或 Auto Scaling Group 接到信号时才扩。
+
+所以必须在集群里跑一个 Cluster Autoscaler Pod，它会监控 Pending Pod，调用 EC2 Auto Scaling API，把节点组从 1 扩到 2、3。
+
+) 给 CA 创建 IAM 权限
+
+它需要有权操作你的节点组/ASG。
+最简单办法：给 CA Pod 绑定一个 IAM Role for Service Account (IRSA)，并附加 AmazonEKSClusterAutoscalerPolicy。
+
+eksctl create iamserviceaccount \
+  --cluster tws-eks-cluster \
+  --namespace kube-system \
+  --name cluster-autoscaler \
+  --attach-policy-arn arn:aws:iam::aws:policy/AutoScalingFullAccess \
+  --override-existing-serviceaccounts \
+  --approve \
+  --region ap-southeast-2
+
+2) 安装 CA
+
+用 Helm：
+
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update
+
+helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
+  -n kube-system \
+  --set autoDiscovery.clusterName=tws-eks-cluster \
+  --set awsRegion=ap-southeast-2 \
+  --set rbac.serviceAccount.name=cluster-autoscaler \
+  --set rbac.serviceAccount.create=false
+
+3) 确认 CA 工作
+kubectl -n kube-system logs deploy/cluster-autoscaler | grep -i "scale-up"
 ```
 ### Monitoring Using kube-prometheus-stack 这是一个 operator还是 helm?
 de easy to operate end-to-end Kubernetes cluster monitoring with  using the . 
@@ -729,6 +775,7 @@ edit the file and add the following in the params for prometheus, grafana and al
 **Grafana:**
 
 ```jsx
+ingress: true
 ingressClassName: alb  # k get ingressclass. controle name 是alb当我们安装loagbalncer controller的时候会自动安装 ingress class name
 annotations:
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb
@@ -739,12 +786,13 @@ annotations:
       alb.ingress.kubernetes.io/ssl-redirect: '443'
  
     hosts:
-      - grafana.devopsdock.site
+      - grafana.marvelneo.online 
 ```
 
 **Prometheus:** 
-可以直接/ prometheus.domain.name
+可以直接搜索/ prometheus.domain.name
 ```jsx
+ingress: trure
 ingressClassName: alb
 annotations:
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb
@@ -758,9 +806,10 @@ annotations:
     然后要给 host name
   
     hosts: 
-      - prometheus.devopsdock.site
-        paths:
+      - prometheus.marvelneo.online 
+        paths: 删除[]
         - /
+        还需要修改 
         pathType: Prefix  path typ： 不要忘记这个是 Prefix   也可以是exact?
 
 
@@ -774,6 +823,7 @@ pathType: Prefix
 例子：path: /api，pathType: Prefix，会匹配 /api、/api/v1、/api/foo 等。
 **Alertmanger:**
 ```jsx
+ingress: true
 ingressClassName: alb
 annotations:
       alb.ingress.kubernetes.io/group.name: easyshop-app-lb
@@ -784,7 +834,7 @@ annotations:
       alb.ingress.kubernetes.io/ssl-redirect: '443'
     
     hosts: 
-      - alertmanager.devopsdock.site
+      - alertmanager.marvelneo.online 
     paths:
     - /
     pathType: Prefix
@@ -800,7 +850,7 @@ grafana, prometheus, alert manager.
 能看到更新的rule,然后再去 route 53. add the record 所有的hostname CNAME 到 alb 的value
 ![alt text](image-2.png)
 
-
+ter
 能看到  mdashboard的 默认值。 grafana - dashboard.  默认的 built-in的rules包含其他的。
 ![alt text](image-4.png)
 ![alt text](image-3.png)
@@ -1054,7 +1104,7 @@ ingress:
   # kubernetes.io/ingress.class: nginx
   # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: logs-kibana.devopsdock.site
+    - host: logs-kibana.marvelneo.online 
       paths:
         - path: /
 ```
