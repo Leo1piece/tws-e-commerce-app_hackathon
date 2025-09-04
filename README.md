@@ -865,10 +865,10 @@ create a new app 类似 azure 中的  apps 。。
 1. create an app “alertmanager”
 2. go to incoming webhook
 3. create a webhook and copy it.  chouse the channle 你想post的
-拷贝这个webhook
-![alt text](image-6.png)
+拷贝这个webhook  https://hooks.slack.com/services/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
 
-又得去 alartmanager confg in the  yml.得到的结果如下
+
+又得去 alartmanager confg in the  yml.得到的结果如下, modify the helm values
 ![alt text](image-7.png)
 ```jsx
 config:
@@ -879,15 +879,15 @@ config:
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 12h
-      receiver: 'slack-notification'
+      receiver: 'slack-notification'  # receiver的name和 routes必须match和 下面的 receviers 的配置.
       routes:
       - receiver: 'slack-notification'
         matchers:
-          - severity = "critical" # 这个是在 alert yaml rule中定义的。 有example rules.
-    receivers:
+          - severity = "critical" # 这个是在 alert yaml rule中定义的 有example rules. 如图所示
+    receivers: #主要是下面的 slack_configs api_url channel 
     - name: 'slack-notification'
       slack_configs:
-          - api_url: 'https://hooks.slack.com/services/T08ULBZB5UY/B08U0CE3DEG/OivCLYq28gNzz4TabiY5zUj'
+          - api_url: 'https://hooks.slack.com/services/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'
             channel: '#alerts'
             send_resolved: true
     templates:
@@ -921,7 +921,7 @@ You would get the notification in the slack’s respective channel.
 
 ## **Logging**
 
-- we will use elasticsearch for logsstore, filebeat for log shipping and kibana for the visualization.
+- we will use elasticsearch for logsstore, filebeat for log shipping and kibana for the visualization. log stash 太heavy了。
 我们需要创建一个 persisit volume， t
 
 ```
@@ -930,8 +930,10 @@ NOTE: The EBS driver we installed is for elasticsearch to dynamically provision 
 **Install Elastic Search:**
 
 ```jsx
-helm repo add elastic https://helm.elastic.co -n logging
+k create ns logging
+helm repo add elastic https://helm.elastic.co 
 helm install my-elasticsearch elastic/elasticsearch --version 8.5.1 -n logging
+intall的时候需要指定 ns
 ```
 k  get po -n lggging 会发现有pending 
 ![alt text](image-8.png)
@@ -985,9 +987,10 @@ upgrade the chart
 helm upgrade my-elasticsearch elastic/elasticsearch -f elasticsearch.yaml -n logging
 ```
 
-if upgarde doesnt happen then uninstall and install it again.
 
-make sure the pod is running .
+
+然后grab 看看是否有role 
+![alt text](image-37.png)
 
 ```jsx
 kubectl get po -n logging
@@ -1023,6 +1026,27 @@ PVC pending 通常是因为没有合适的 StorageClass 或 PV 可用。手动�
    ![alt text](image-12.png)
    没有role
 
+   if upgarde doesnt happen then uninstall and install it again.
+重装的命令
+helm list -n logging
+helm uninstalll my-elasticserarch -n logging
+helm install my-elasticsearch elastic/elasticsearch --version -f elasticsearch.yaml -n logging
+
+
+k get pv -n logging
+k get pvc -n logging
+k get storageclass
+又可能iusse 是因为 ebs-csi driver
+k get po -n kube-system
+查看 ebs-cis driver的  event。
+大部分时间是 pvc的原因，因为 statefulset，所以pvc 不会被删除，需要自动手动删除。
+
+k get sa ebs-csi-controller-sa -n kube-system -o yaml
+
+然后最后发现 没有secret access key
+![alt text](image-35.png)
+![alt text](image-36.png)
+
 ![alt text](image-13.png)
 
 uninstall and  install it again!!!!!!!!!!
@@ -1031,6 +1055,17 @@ uninstall and  install it again!!!!!!!!!!
 然后 grep  role 
 ![alt text](image-15.png)
 
+![alt text](image-38.png)
+
+却 servcie account， 在 annotaition中注释这个。
+
+![alt text](image-39.png)
+需要 vi ebs-drvier.yaml 
+helm list -n kube-system
+helm uninstall aws-ebs-csi-driver -n kubee-system
+然后再词安装
+
+![alt text](image-40.png)
 然后能看到这个volume 
 ![alt text](image-16.png)
 install filebeat for log shipping.
